@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Category;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class CategoryController extends Controller
@@ -12,9 +13,11 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::latest()->paginate(10);
+        $categories = Category::when($request->filled('search'), function ($q) use ($request) {
+            $q->where('name', 'like', '%'.$request->search.'%');
+        })->latest()->paginate(10)->withQueryString();
 
         return view('admin.categories.index', compact('categories'));
     }

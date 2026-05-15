@@ -1,30 +1,72 @@
 @extends('admin.layout')
+@section('title', 'Bookings')
 @section('content')
 <div class="admin-page-header">
     <div>
-        <span class="admin-eyebrow">Bookings</span>
-        <h2>Bookings Management</h2>
+        <span class="text-teal-700 text-[0.72rem] font-extrabold uppercase tracking-wider">Bookings</span>
+        <h2 class="text-2xl font-black mt-0.5">Bookings Management</h2>
     </div>
 </div>
-<form class="admin-card row g-3 mb-3">
-    <div class="col-md-3"><input name="search" class="form-control" placeholder="Search name, contact, service..." value="{{ request('search') }}"></div>
-    <div class="col-md-2"><input type="date" name="event_date" class="form-control" value="{{ request('event_date') }}"></div>
-    <div class="col-md-3"><select name="service_id" class="form-select"><option value="">All Services</option>@foreach($services as $service)<option value="{{ $service->id }}" @selected((string)request('service_id')===(string)$service->id)>{{ $service->name }}</option>@endforeach</select></div>
-    <div class="col-md-2"><select name="status" class="form-select"><option value="">Status</option><option @selected(request('status') === 'Pending')>Pending</option><option @selected(request('status') === 'Approved')>Approved</option><option @selected(request('status') === 'Rejected')>Rejected</option></select></div>
-    <div class="col-md-2"><button class="btn btn-admin-primary w-100">Filter</button></div>
+
+<form class="bg-white border border-slate-200 rounded-xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-3 items-end">
+    <input name="search" class="admin-input" placeholder="Search name, contact, service..." value="{{ request('search') }}">
+    <select name="status" class="admin-input">
+        <option value="">All Status</option>
+        <option @selected(request('status') === 'Pending')>Pending</option>
+        <option @selected(request('status') === 'Approved')>Approved</option>
+        <option @selected(request('status') === 'Rejected')>Rejected</option>
+    </select>
+    <button class="btn-admin w-full sm:w-auto justify-center"><i class="fas fa-filter"></i> Filter</button>
 </form>
-<div class="admin-card table-responsive">
-<table class="table table-hover align-middle"><thead><tr><th>Booking ID</th><th>User Name</th><th>Contact Number</th><th>Service Name</th><th>Address</th><th>Date</th><th>Status</th><th>Created At</th><th>Action</th></tr></thead><tbody>
-@forelse($bookings as $booking)
-<tr><td>#{{ $booking->id }}</td><td>{{ $booking->user?->name ?? 'Deleted user' }}</td><td>{{ $booking->contact_number }}</td><td>{{ $booking->service_name }}</td><td class="admin-address-cell">{{ $booking->address }}</td><td>{{ $booking->event_date }}</td><td><span class="status-pill status-{{ strtolower($booking->status) }}">{{ $booking->status }}</span></td><td>{{ $booking->created_at->format('Y-m-d') }}</td><td class="admin-actions">
-    <form method="POST" action="{{ route('admin.bookings.status', [$booking, 'Approved']) }}">@csrf @method('PATCH')<button class="btn btn-sm btn-success">Approve</button></form>
-    <form method="POST" action="{{ route('admin.bookings.status', [$booking, 'Rejected']) }}">@csrf @method('PATCH')<button class="btn btn-sm btn-warning">Reject</button></form>
-    <form method="POST" action="{{ route('admin.bookings.destroy', $booking) }}">@csrf @method('DELETE')<button class="btn btn-sm btn-danger">Delete</button></form>
-</td></tr>
-@empty
-<tr><td colspan="9" class="text-center text-muted py-4">No bookings found.</td></tr>
-@endforelse
-</tbody></table>
-{{ $bookings->links() }}
+
+<div class="admin-card">
+    <div class="overflow-x-auto">
+        <table class="admin-table">
+            <thead><tr><th>ID</th><th>User</th><th>Contact</th><th>Service</th><th>Date</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody>
+                @forelse($bookings as $booking)
+                    <tr>
+                        <td class="font-bold">#{{ $booking->id }}</td>
+                        <td>{{ $booking->user?->name ?? 'Deleted user' }}</td>
+                        <td class="text-sm">{{ $booking->contact_number }}</td>
+                        <td>{{ $booking->service_name }}</td>
+                        <td>{{ $booking->event_date }}</td>
+                        <td>
+                            <span class="status-pill text-xs font-bold rounded-full px-3 py-1
+                                @switch(strtolower($booking->status))
+                                    @case('pending') bg-amber-100 text-amber-800 @break
+                                    @case('approved') bg-green-100 text-green-800 @break
+                                    @case('rejected') bg-red-100 text-red-800 @break
+                                @endswitch">{{ $booking->status }}</span>
+                        </td>
+                        <td class="text-xs text-slate-500">{{ $booking->created_at->format('d M Y') }}</td>
+                        <td>
+                            <div class="flex flex-wrap gap-1">
+                                @if(strtolower($booking->status) !== 'approved')
+                                <form method="POST" action="{{ route('admin.bookings.status', [$booking, 'Approved']) }}">
+                                    @csrf @method('PATCH')
+                                    <button class="px-2.5 py-1 rounded-lg text-xs font-bold border-none cursor-pointer bg-green-100 text-green-800 hover:bg-green-200 transition-colors">Approve</button>
+                                </form>
+                                @endif
+                                @if(strtolower($booking->status) !== 'rejected')
+                                <form method="POST" action="{{ route('admin.bookings.status', [$booking, 'Rejected']) }}">
+                                    @csrf @method('PATCH')
+                                    <button class="px-2.5 py-1 rounded-lg text-xs font-bold border-none cursor-pointer bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors">Reject</button>
+                                </form>
+                                @endif
+                                <form method="POST" action="{{ route('admin.bookings.destroy', $booking) }}">
+                                    @csrf @method('DELETE')
+                                    <button class="px-2.5 py-1 rounded-lg text-xs font-bold border-none cursor-pointer bg-red-100 text-red-800 hover:bg-red-200 transition-colors" onclick="return confirm('Delete this booking?')">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="8" class="text-center py-6 text-slate-500"><i class="fas fa-inbox text-2xl mb-2 block"></i>No bookings found.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    <div class="p-4 border-t border-slate-100">{{ $bookings->links('pagination::tailwind') }}</div>
 </div>
 @endsection

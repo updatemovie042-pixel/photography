@@ -5,7 +5,9 @@ use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\PackageController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\ProfileController;
@@ -48,6 +50,8 @@ Route::prefix('admin')->group(function () {
         Route::get('/users', [AdminUserController::class, 'index'])->name('admin.users.index');
         Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('admin.users.show');
         Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
+        Route::resource('/categories', CategoryController::class)->names('admin.categories');
+        Route::resource('/packages', PackageController::class)->names('admin.packages');
     });
 });
 

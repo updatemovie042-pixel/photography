@@ -5,26 +5,35 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreServiceRequest;
 use App\Http\Requests\UpdateServiceRequest;
+use App\Models\Category;
 use App\Models\Service;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ServiceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $services = Service::latest()->paginate(12);
+        $services = Service::when($request->filled('search'), function ($q) use ($request) {
+            $q->where('name', 'like', '%'.$request->search.'%');
+        })->latest()->paginate(12)->withQueryString();
 
         return view('admin.services.index', compact('services'));
     }
 
     public function create()
     {
-        return view('admin.services.create');
+        $categories = Category::orderBy('name')->get();
+
+        return view('admin.services.create', compact('categories'));
     }
 
     public function store(StoreServiceRequest $request)
     {
         $data = $request->validated();
+        $category = Category::findOrFail($data['category_id']);
+        $data['category'] = $category->name;
+
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('services', 'public');
         }
@@ -36,12 +45,17 @@ class ServiceController extends Controller
 
     public function edit(Service $service)
     {
-        return view('admin.services.edit', compact('service'));
+        $categories = Category::orderBy('name')->get();
+
+        return view('admin.services.edit', compact('service', 'categories'));
     }
 
     public function update(UpdateServiceRequest $request, Service $service)
     {
         $data = $request->validated();
+        $category = Category::findOrFail($data['category_id']);
+        $data['category'] = $category->name;
+
         if ($request->hasFile('image')) {
             if ($service->image) {
                 Storage::disk('public')->delete($service->image);

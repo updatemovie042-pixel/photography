@@ -16,7 +16,7 @@ class StoreServiceRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
-            'category' => ['required', 'string', 'max:100'],
+            'category_id' => ['required', 'integer', 'exists:categories,id'],
             'price' => ['required', 'numeric', 'min:0'],
             'image' => ['nullable', 'image', 'max:5120'],
             'duration' => ['nullable', 'string', 'max:100'],

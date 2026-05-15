@@ -6,15 +6,20 @@ use App\Http\Requests\StorePackageRequest;
 use App\Http\Requests\UpdatePackageRequest;
 use App\Models\Category;
 use App\Models\Package;
+use Illuminate\Http\Request;
 
 class PackageController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $packages = Package::with('category')->latest()->paginate(10);
+        $packages = Package::with('category')
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $q->where('name', 'like', '%'.$request->search.'%');
+            })
+            ->latest()->paginate(10)->withQueryString();
 
         return view('admin.packages.index', compact('packages'));
     }
